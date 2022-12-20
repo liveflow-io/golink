@@ -2,6 +2,8 @@ module github.com/tailscale/golink
 
 go 1.23.1
 
+toolchain go1.23.6
+
 require (
 	github.com/google/go-cmp v0.6.0
 	golang.org/x/net v0.32.0

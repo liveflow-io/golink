@@ -2,6 +2,7 @@
 <h2 class="text-xl font-bold pb-2">Create a new link</h2>
 
 <form method="POST" action="/" class="flex flex-col">
+  <input type="hidden" name="xsrf" value="{{ .XSRF }}" />
   <div class="flex flex-wrap">
     <div class="flex flex-none">
       <label
