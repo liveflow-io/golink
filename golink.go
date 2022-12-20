@@ -274,6 +274,7 @@ type homeData struct {
 	Short  string
 	Long   string
 	Clicks []visitData
+	Links	 []*Link
 	XSRF   string
 }
 
@@ -468,14 +469,17 @@ func serveHome(w http.ResponseWriter, r *http.Request, short string) {
 	}
 
 	cu, err := currentUser(r)
+	links, err := db.LoadAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	homeTmpl.Execute(w, homeData{
 		Short:  short,
 		Long:   long,
 		Clicks: clicks,
+		Links:  links,
 		XSRF:   xsrftoken.Generate(xsrfKey, cu.login, newShortName),
 	})
 }
@@ -900,6 +904,8 @@ func serveSave(w http.ResponseWriter, r *http.Request) {
 		owner = cu.login
 	}
 
+	desc :=  r.FormValue("desc")
+
 	now := time.Now().UTC()
 	if link == nil {
 		link = &Link{
@@ -909,6 +915,7 @@ func serveSave(w http.ResponseWriter, r *http.Request) {
 	}
 	link.Short = short
 	link.Long = long
+	link.Desc = desc
 	link.LastEdit = now
 	link.Owner = owner
 	if err := db.Save(link); err != nil {
