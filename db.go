@@ -22,6 +22,7 @@ import (
 type Link struct {
 	Short    string // the "foo" part of http://go/foo
 	Long     string // the target URL or text/template pattern to run
+	Desc 	   string // description of the link (optional)
 	Created  time.Time
 	LastEdit time.Time // when the link was last edited
 	Owner    string    // user@domain
@@ -72,14 +73,14 @@ func (s *SQLiteDB) LoadAll() ([]*Link, error) {
 	defer s.mu.RUnlock()
 
 	var links []*Link
-	rows, err := s.db.Query("SELECT Short, Long, Created, LastEdit, Owner FROM Links")
+	rows, err := s.db.Query("SELECT Short, Long, Desc, Created, LastEdit, Owner FROM Links ORDER BY Short")
 	if err != nil {
 		return nil, err
 	}
 	for rows.Next() {
 		link := new(Link)
 		var created, lastEdit int64
-		err := rows.Scan(&link.Short, &link.Long, &created, &lastEdit, &link.Owner)
+		err := rows.Scan(&link.Short, &link.Long, &link.Desc, &created, &lastEdit, &link.Owner)
 		if err != nil {
 			return nil, err
 		}
@@ -101,8 +102,8 @@ func (s *SQLiteDB) Load(short string) (*Link, error) {
 
 	link := new(Link)
 	var created, lastEdit int64
-	row := s.db.QueryRow("SELECT Short, Long, Created, LastEdit, Owner FROM Links WHERE ID = ?1 LIMIT 1", linkID(short))
-	err := row.Scan(&link.Short, &link.Long, &created, &lastEdit, &link.Owner)
+	row := s.db.QueryRow("SELECT Short, Long, Desc, Created, LastEdit, Owner FROM Links WHERE ID = ?1 LIMIT 1", linkID(short))
+	err := row.Scan(&link.Short, &link.Long, &link.Desc, &created, &lastEdit, &link.Owner)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = fs.ErrNotExist
@@ -119,7 +120,8 @@ func (s *SQLiteDB) Save(link *Link) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result, err := s.db.Exec("INSERT OR REPLACE INTO Links (ID, Short, Long, Created, LastEdit, Owner) VALUES (?, ?, ?, ?, ?, ?)", linkID(link.Short), link.Short, link.Long, link.Created.Unix(), link.LastEdit.Unix(), link.Owner)
+	result, err := s.db.Exec("INSERT OR REPLACE INTO Links (ID, Short, Long, Desc, Created, LastEdit, Owner) VALUES (?, ?, ?, ?, ?, ?, ?)", linkID(link.Short), link.Short, link.Long, link.Desc, link.Created.Unix(), link.LastEdit.Unix(), link.Owner)
+
 	if err != nil {
 		return err
 	}
